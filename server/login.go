@@ -15,6 +15,7 @@ type SignUp struct {
 	Email     *string `json:"email"`
 	Gender    *string `json:"gender"`
 	genderInt int
+	PwdRaw    *string `json:"pwd_raw"`
 }
 
 func (s *SignUp) checkSignUpField() error {
@@ -24,6 +25,8 @@ func (s *SignUp) checkSignUpField() error {
 		return errors.New("gender参数范围错误")
 	} else if !IsEmailValid(s.Email) {
 		return errors.New("email参数不合法")
+	} else if len(*s.PwdRaw) < 6 {
+		return errors.New("密码过短")
 	}
 	return nil
 }
@@ -57,7 +60,7 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
 			}
 		} else {
-			s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.genderInt)
+			s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.PwdRaw, sinUp.genderInt)
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,

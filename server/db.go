@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"sync"
 )
 
 type DB interface {
@@ -13,9 +14,10 @@ type DB interface {
 }
 
 type SqlDataBase struct {
-	db             *sql.DB
-	driverName     string
-	dataSourceName string
+	db              *sql.DB
+	driverName      string
+	dataSourceName  string
+	createUserMutex sync.Mutex
 }
 
 func NewSqliteDB(path string) *SqlDataBase {
@@ -40,14 +42,18 @@ func (s *SqlDataBase) Close() {
 	}
 }
 
-func (s *SqlDataBase) ExecSql(query string) {
+func (s *SqlDataBase) ExecSql(query string) sql.Result {
 	res, err := s.db.Exec(query)
 	if err != nil {
-		log.Fatal(err, "\nerror sql: ", query)
+		log.Println(err, "\nerror sql: ", query)
 	}
-	log.Println("ExecSql Res:", res)
+	return res
 }
 
-func (s *SqlDataBase) CreateUser(nickName, email *string, gender int) {
-	s.ExecSql(fmt.Sprintf("INSERT INTO User(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", *nickName, gender, *email))
+func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) {
+	s.createUserMutex.Lock()
+	res := s.ExecSql(fmt.Sprintf("INSERT INTO User(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", *nickName, gender, *email))
+	userID, _ := res.LastInsertId()
+	s.createUserMutex.Unlock()
+	s.ExecSql(fmt.Sprintf("INSERT INTO UserPwd(U_ID, U_Pwd) VALUES('%d', '%s')", userID, *pwd))
 }
