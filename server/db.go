@@ -90,20 +90,28 @@ func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) error
 	return nil
 }
 
-func (s *SqlDataBase) VerifyPwdByEmail(email, pwdA *string) bool {
-	query := "SELECT `U_ID` FROM `User` WHERE `U_Email`=?"
-	row := s.db.QueryRow(query, *email)
-	var UserID int
-	_ = row.Scan(&UserID)
-	if UserID == 0 { // 用户不存在
-		return false
+func (s *SqlDataBase) VerifyPwdByUserID(UserID int, pwdA *string) (bool, string) {
+	query := "SELECT COUNT(*) FROM `User` WHERE `U_ID`=?"
+	row := s.db.QueryRow(query, UserID)
+	var count int
+	_ = row.Scan(&count)
+	if count == 0 {
+		return false, "用户不存在"
 	}
 	query = "SELECT `U_Pwd` FROM `UserPwd` WHERE `U_ID`=?"
 	row = s.db.QueryRow(query, UserID)
 	var pwdB string
 	_ = row.Scan(&pwdB)
 	if *pwdA == pwdB {
-		return true
+		return true, "密码匹配"
 	}
-	return false
+	return false, "密码错误"
+}
+
+func (s *SqlDataBase) VerifyPwdByEmail(email, pwdA *string) (bool, string) {
+	UserID := s.GetUserIDByEmail(email)
+	if UserID == 0 {
+		return false, "用户不存在"
+	}
+	return s.VerifyPwdByUserID(UserID, pwdA)
 }

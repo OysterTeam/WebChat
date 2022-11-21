@@ -81,16 +81,22 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 }
 
 type SignIn struct {
-	UserID *string `json:"user_id"`
-	Email  *string `json:"email"`
-	PwdRaw *string `json:"pwd_raw"`
+	UserID    *string `json:"user_id"`
+	UserIDInt int
+	Email     *string `json:"email"`
+	PwdRaw    *string `json:"pwd_raw"`
 }
 
 func (s *SignIn) checkSignInField() error {
 	if s.UserID == nil && s.Email == nil {
 		return errors.New("user_id 与 email 不能同时为空")
+	} else if s.UserID != nil && s.Email != nil {
+		return errors.New("user_id 与 email 不能同时填写")
 	} else if s.PwdRaw == nil {
 		return errors.New("pwd_raw不能为空")
+	}
+	if s.UserID != nil {
+		s.UserIDInt, _ = strconv.Atoi(*s.UserID)
 	}
 	return nil
 }
@@ -126,16 +132,19 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
 				HttpResponseData: false,
 			}
-		} else {
+		} else { // json校验通过，校验密码
 			var pwdCorrect bool
-			if sinIn.Email != nil {
-				pwdCorrect = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
+			var info string
+			if sinIn.UserID != nil {
+				pwdCorrect, info = s.db.VerifyPwdByUserID(sinIn.UserIDInt, sinIn.PwdRaw)
+			} else {
+				pwdCorrect, info = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
 			}
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
-				HttpResponseMsg:  "密码匹配状态:" + strconv.FormatBool(pwdCorrect),
-				HttpResponseData: true,
+				HttpResponseMsg:  "密码匹配状态:" + info,
+				HttpResponseData: pwdCorrect,
 			}
 		}
 	}
