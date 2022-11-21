@@ -7,18 +7,20 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type SignUp struct {
-	NickName *string `json:"nick_name"`
-	Email    *string `json:"email"`
-	Gender   int     `json:"gender"`
+	NickName  *string `json:"nick_name"`
+	Email     *string `json:"email"`
+	Gender    *string `json:"gender"`
+	genderInt int
 }
 
 func (s *SignUp) checkSignUpField() error {
-	if s.NickName == nil || s.Email == nil || s.Gender == 0 {
+	if s.NickName == nil || s.Email == nil || s.Gender == nil {
 		return errors.New("有参数字段为空")
-	} else if s.Gender < 1 || s.Gender > 2 {
+	} else if s.genderInt, _ = strconv.Atoi(*s.Gender); s.genderInt < 1 || s.genderInt > 2 {
 		return errors.New("gender参数范围错误")
 	} else if !IsEmailValid(s.Email) {
 		return errors.New("email参数不合法")
@@ -28,6 +30,7 @@ func (s *SignUp) checkSignUpField() error {
 
 func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	SetupCORS(&w)
 	var hr HttpResponseJson
 	w.Header().Set("Content-type", "application/json")
 	if r.Method == http.MethodGet {
@@ -54,7 +57,7 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
 			}
 		} else {
-			s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.Gender)
+			s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.genderInt)
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
