@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+type HttpResponseJson struct {
+	HttpResponseCode int         `json:"http_response_code,omitempty"`
+	HttpResponseMsg  string      `json:"http_response_msg,omitempty"`
+	HttpResponseData interface{} `json:"http_response_data,omitempty"`
+}
+
 func IntToBytes(n int) []byte {
 	x := int32(n)
 	bytesBuffer := bytes.NewBuffer([]byte{})
