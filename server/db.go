@@ -2,6 +2,7 @@ package server
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -45,4 +46,8 @@ func (s *SqlDataBase) ExecSql(query string) {
 		log.Fatal(err, "\nerror sql: ", query)
 	}
 	log.Println("ExecSql Res:", res)
+}
+
+func (s *SqlDataBase) CreateUser(nickName, email string, gender int) {
+	s.ExecSql(fmt.Sprintf("INSERT INTO User(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", nickName, gender, email))
 }
