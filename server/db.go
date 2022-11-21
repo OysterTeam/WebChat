@@ -48,6 +48,6 @@ func (s *SqlDataBase) ExecSql(query string) {
 	log.Println("ExecSql Res:", res)
 }
 
-func (s *SqlDataBase) CreateUser(nickName, email string, gender int) {
-	s.ExecSql(fmt.Sprintf("INSERT INTO User(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", nickName, gender, email))
+func (s *SqlDataBase) CreateUser(nickName, email *string, gender int) {
+	s.ExecSql(fmt.Sprintf("INSERT INTO User(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", *nickName, gender, *email))
 }
