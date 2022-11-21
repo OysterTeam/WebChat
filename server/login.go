@@ -52,24 +52,32 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
 				HttpResponseMsg:  "错误: json错误无法解析",
+				HttpResponseData: false,
 			}
 
 		} else if err = sinUp.checkSignUpField(); err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
 				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
+				HttpResponseData: false,
+			}
+		} else if err = s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.PwdRaw, sinUp.genderInt); err != nil {
+			hr = HttpResponseJson{
+				HttpResponseCode: http.StatusBadRequest,
+				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
+				HttpResponseData: false,
 			}
 		} else {
-			s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.PwdRaw, sinUp.genderInt)
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
 				HttpResponseMsg:  "成功: 已创建用户",
+				HttpResponseData: true,
 			}
 		}
+		hrj, _ := json.Marshal(hr)
+		_, _ = w.Write(hrj)
 	}
-	hrj, _ := json.Marshal(hr)
-	_, _ = w.Write(hrj)
 }
 
 type SignIn struct {

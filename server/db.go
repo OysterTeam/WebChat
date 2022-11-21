@@ -2,7 +2,7 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"sync"
@@ -50,12 +50,44 @@ func (s *SqlDataBase) ExecSql(query string) sql.Result {
 	return res
 }
 
-func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) { // 还需要校验email是否已经注册
+func (s *SqlDataBase) GetUserIDByEmail(email *string) int {
+	query := "SELECT `U_ID` FROM `User` WHERE `U_Email`=?"
+	row := s.db.QueryRow(query, *email)
+	var UserID int
+	_ = row.Scan(&UserID)
+	return UserID
+}
+
+func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) error {
+	UserID := s.GetUserIDByEmail(email)
+	if UserID != 0 {
+		return errors.New("email已注册")
+	}
 	s.createUserMutex.Lock()
-	res := s.ExecSql(fmt.Sprintf("INSERT INTO `User`(U_Nickname, U_Gender,U_Email) VALUES('%s','%d','%s')", *nickName, gender, *email))
-	userID, _ := res.LastInsertId()
+	query := "INSERT INTO `User`(U_Nickname, U_Gender,U_Email) VALUES(?,?,?)"
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	res, err := stmt.Exec(*nickName, gender, *email)
+	if err != nil {
+		return err
+	}
+	userID, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
 	s.createUserMutex.Unlock()
-	s.ExecSql(fmt.Sprintf("INSERT INTO `UserPwd`(U_ID, U_Pwd) VALUES('%d', '%s')", userID, *pwd))
+	query = "INSERT INTO `UserPwd`(U_ID, U_Pwd) VALUES(?, ?)"
+	stmt, err = s.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(userID, *pwd)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *SqlDataBase) VerifyPwdByEmail(email, pwdA *string) bool {
