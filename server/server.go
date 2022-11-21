@@ -34,6 +34,9 @@ func (s *ChatServer) Run() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(s, w, r)
 	})
+	http.HandleFunc("/signup", func(w http.ResponseWriter, r *http.Request) {
+		serveSignUp(s, w, r)
+	})
 	s.db.Open()
 	defer s.db.Close()
 	go s.msgMux.Serve()
