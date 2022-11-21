@@ -38,3 +38,11 @@ func (s *SqlDataBase) Close() {
 		log.Fatal(err)
 	}
 }
+
+func (s *SqlDataBase) ExecSql(query string) {
+	res, err := s.db.Exec(query)
+	if err != nil {
+		log.Fatal(err, "\nerror sql: ", query)
+	}
+	log.Println("ExecSql Res:", res)
+}
