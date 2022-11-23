@@ -14,7 +14,7 @@ type ChatServer struct {
 	online        chan *Client     // 上线通道
 	offline       chan *Client     // 下线通道
 	onlineMap     map[*Client]bool //在线用户表
-	tokenUserMap  map[*string]int  //token-UserID表
+	tokenUserMap  map[string]int   //token-UserID表
 	userClientMap map[int]*Client  //UserID-Client表
 }
 

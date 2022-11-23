@@ -150,7 +150,7 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				HttpResponseData: pwdCorrect,
 				WSToken:          *tokenStr,
 			}
-			s.tokenUserMap[tokenStr] = userIDInt
+			s.tokenUserMap[*tokenStr] = userIDInt
 		}
 	}
 	hrj, _ := json.Marshal(hr)
