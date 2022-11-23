@@ -20,13 +20,15 @@ type ChatServer struct {
 
 func NewChatServer(addr *string) *ChatServer {
 	return &ChatServer{
-		db:        NewSqliteDB("db/my.db"),
-		addr:      addr,
-		RWTimeout: 10 * time.Second,
-		msgMux:    NewMsgMux(),
-		online:    make(chan *Client),
-		offline:   make(chan *Client),
-		onlineMap: make(map[*Client]bool),
+		db:            NewSqliteDB("db/my.db"),
+		addr:          addr,
+		RWTimeout:     10 * time.Second,
+		msgMux:        NewMsgMux(),
+		online:        make(chan *Client),
+		offline:       make(chan *Client),
+		onlineMap:     make(map[*Client]bool),
+		tokenUserMap:  make(map[string]int),
+		userClientMap: make(map[int]*Client),
 	}
 }
 
