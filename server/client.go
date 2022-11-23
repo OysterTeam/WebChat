@@ -37,6 +37,15 @@ type Client struct {
 }
 
 func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
+	tokenStr := r.Header.Get("Authorization") //Bearer
+	if tokenStr == "" {                       //未传token
+		return
+	}
+	userID, ok := s.tokenUserMap[tokenStr]
+	if !ok { //无此Token
+		return
+	}
+	//建立连接
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -47,6 +56,7 @@ func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		conn:       conn,
 		msgMux:     s.msgMux,
 	}
+	s.userClientMap[userID] = client
 	client.chatServer.online <- client
 	_ = conn.WriteMessage(websocket.TextMessage, append([]byte("websocket连接成功")))
 	go client.readPump()
