@@ -142,13 +142,15 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 			} else {
 				pwdCorrect, info, userIDInt = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
 			}
+			tokenStr := GetTokenStr(strconv.Itoa(userIDInt))
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
 				HttpResponseMsg:  "密码匹配状态:" + info,
 				HttpResponseData: pwdCorrect,
-				WSToken:          *GetTokenStr(strconv.Itoa(userIDInt)),
+				WSToken:          *tokenStr,
 			}
+			s.tokenUserMap[tokenStr] = userIDInt
 		}
 	}
 	hrj, _ := json.Marshal(hr)
