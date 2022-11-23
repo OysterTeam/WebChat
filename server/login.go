@@ -95,10 +95,11 @@ func (s *SignIn) checkSignInField() error {
 	} else if s.PwdRaw == nil {
 		return errors.New("pwd_raw不能为空")
 	}
+	var err error
 	if s.UserID != nil {
-		s.UserIDInt, _ = strconv.Atoi(*s.UserID)
+		s.UserIDInt, err = strconv.Atoi(*s.UserID)
 	}
-	return nil
+	return err
 }
 
 func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
@@ -140,17 +141,37 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				pwdCorrect, info = s.db.VerifyPwdByUserID(sinIn.UserIDInt, sinIn.PwdRaw)
 				userIDInt = sinIn.UserIDInt
 			} else {
+				log.Println(sinIn.Email)
 				pwdCorrect, info, userIDInt = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
 			}
-			tokenStr := GetTokenStr(strconv.Itoa(userIDInt))
-			w.WriteHeader(http.StatusCreated)
-			hr = HttpResponseJson{
-				HttpResponseCode: http.StatusCreated,
-				HttpResponseMsg:  "密码匹配状态:" + info,
-				HttpResponseData: pwdCorrect,
-				WSToken:          *tokenStr,
+			if !pwdCorrect { // 密码不正确
+				w.WriteHeader(http.StatusOK)
+				hr = HttpResponseJson{
+					HttpResponseCode: http.StatusOK,
+					HttpResponseMsg:  "密码匹配状态:" + info,
+					HttpResponseData: pwdCorrect,
+				}
+			} else { // 密码正确，判断是否已有登录
+				_, ok := s.userClientSyncMap.Load(userIDInt)
+				if ok { //存在连接，目前不允许顶替登录
+					w.WriteHeader(http.StatusCreated)
+					hr = HttpResponseJson{
+						HttpResponseCode: http.StatusOK,
+						HttpResponseMsg:  "密码匹配，但已有连接。",
+						HttpResponseData: false,
+					}
+				} else { // 可以连接，发送token
+					tokenStr := GetTokenStr(strconv.Itoa(userIDInt))
+					w.WriteHeader(http.StatusCreated)
+					hr = HttpResponseJson{
+						HttpResponseCode: http.StatusCreated,
+						HttpResponseMsg:  "密码匹配状态:" + info,
+						HttpResponseData: pwdCorrect,
+						WSToken:          *tokenStr,
+					}
+					s.userTokenSyncMap.Store(userIDInt, *tokenStr)
+				}
 			}
-			s.tokenUserMap[*tokenStr] = userIDInt
 		}
 	}
 	hrj, _ := json.Marshal(hr)

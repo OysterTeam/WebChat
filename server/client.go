@@ -38,11 +38,19 @@ type Client struct {
 
 func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 	tokenStr := r.Header.Get("Authorization") //Bearer
-	if tokenStr == "" {                       //未传token
+	//if tokenStr == "" {                       //未传token
+	//	return
+	//}
+	//userID, ok := s.tokenUserMap[tokenStr]
+	userIDStr, err := ParseTokenStr(&tokenStr)
+	if err != nil {
 		return
 	}
-	userID, ok := s.tokenUserMap[tokenStr]
-	if !ok { //无此Token
+	userID, err := strconv.Atoi(*userIDStr)
+	if err != nil {
+		return
+	}
+	if ok := s.VerifyToken(userID, &tokenStr); !ok {
 		return
 	}
 	//建立连接
@@ -55,9 +63,10 @@ func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		chatServer: s,
 		conn:       conn,
 		msgMux:     s.msgMux,
+		userId:     userID,
 	}
-	s.userClientMap[userID] = client
-	client.chatServer.online <- client
+	s.userClientSyncMap.Store(userID, client)
+	client.chatServer.signIn <- userID
 	_ = conn.WriteMessage(websocket.TextMessage, append([]byte("websocket连接成功")))
 	go client.readPump()
 	go client.writePump()
@@ -65,7 +74,7 @@ func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 
 func (c *Client) readPump() {
 	defer func() {
-		c.chatServer.offline <- c
+		c.chatServer.signOut <- c.userId
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)

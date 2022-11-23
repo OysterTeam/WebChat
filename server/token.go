@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"time"
@@ -10,7 +11,7 @@ var secretSigningKey = []byte("secretSigningKey")
 
 func GetTokenStr(userID string) *string {
 	claims := &jwt.StandardClaims{
-		ExpiresAt: time.Now().Unix() + 600,
+		ExpiresAt: time.Now().Unix() + 60,
 		Subject:   userID,
 		Issuer:    "server",
 	}
@@ -23,6 +24,9 @@ func GetTokenStr(userID string) *string {
 }
 
 func ParseTokenStr(tokenStr *string) (*string, error) {
+	if *tokenStr == "" {
+		return nil, errors.New("空token")
+	}
 	token, err := jwt.ParseWithClaims(*tokenStr, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretSigningKey, nil
 	})
