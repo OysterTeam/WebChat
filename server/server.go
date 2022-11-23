@@ -7,15 +7,15 @@ import (
 )
 
 type ChatServer struct {
-	db            *SqlDataBase        // 登录数据库
-	addr          *string             // 端口
-	RWTimeout     time.Duration       // 读写超时
-	msgMux        *MsgMux             // 消息路由
-	online        chan *Client        // 上线通道
-	offline       chan *Client        // 下线通道
-	onlineMap     map[*Client]bool    //在线用户表
-	tokenUserMap  map[*string]*string //token-UserID表
-	userClientMap map[*string]*Client //UserID-Client表
+	db            *SqlDataBase     // 登录数据库
+	addr          *string          // 端口
+	RWTimeout     time.Duration    // 读写超时
+	msgMux        *MsgMux          // 消息路由
+	online        chan *Client     // 上线通道
+	offline       chan *Client     // 下线通道
+	onlineMap     map[*Client]bool //在线用户表
+	tokenUserMap  map[*string]int  //token-UserID表
+	userClientMap map[int]*Client  //UserID-Client表
 }
 
 func NewChatServer(addr *string) *ChatServer {
