@@ -108,10 +108,11 @@ func (s *SqlDataBase) VerifyPwdByUserID(UserID int, pwdA *string) (bool, string)
 	return false, "密码错误"
 }
 
-func (s *SqlDataBase) VerifyPwdByEmail(email, pwdA *string) (bool, string) {
+func (s *SqlDataBase) VerifyPwdByEmail(email, pwdA *string) (bool, string, int) {
 	UserID := s.GetUserIDByEmail(email)
 	if UserID == 0 {
-		return false, "用户不存在"
+		return false, "用户不存在", 0
 	}
-	return s.VerifyPwdByUserID(UserID, pwdA)
+	correct, info := s.VerifyPwdByUserID(UserID, pwdA)
+	return correct, info, UserID
 }

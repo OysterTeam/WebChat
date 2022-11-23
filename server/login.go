@@ -135,16 +135,19 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		} else { // json校验通过，校验密码
 			var pwdCorrect bool
 			var info string
-			if sinIn.UserID != nil {
+			var userIDInt int
+			if sinIn.UserIDInt != 0 {
 				pwdCorrect, info = s.db.VerifyPwdByUserID(sinIn.UserIDInt, sinIn.PwdRaw)
+				userIDInt = sinIn.UserIDInt
 			} else {
-				pwdCorrect, info = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
+				pwdCorrect, info, userIDInt = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
 			}
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
 				HttpResponseMsg:  "密码匹配状态:" + info,
 				HttpResponseData: pwdCorrect,
+				WSToken:          *GetTokenStr(strconv.Itoa(userIDInt)),
 			}
 		}
 	}
