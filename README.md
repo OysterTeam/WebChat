@@ -14,8 +14,9 @@ github.com/dgrijalva/jwt-go
 ## 文档
 
 ### 建表
+这里采用`sqlite`，文件放在`db`文件夹下，如需更改请跳转到`server.go`的`NewSqliteDB("db/my.db")`语句。
 
-```sqlite
+```sql
 CREATE TABLE `User`
 (
     `U_ID`             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +37,7 @@ CREATE TABLE `UserPwd`
 );
 ```
 想要让用户的id从`300000`开始自增，则：
-```sqlite
+```sql
 UPDATE sqlite_sequence set seq=300000 where name='User';
 UPDATE sqlite_sequence set seq=300000 where name='UserPwd'
 ```
