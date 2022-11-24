@@ -7,11 +7,13 @@ import (
 	"time"
 )
 
+var ExpiresSecond int64 = 60
+
 var secretSigningKey = []byte("secretSigningKey")
 
 func GetTokenStr(userID string) *string {
 	claims := &jwt.StandardClaims{
-		ExpiresAt: time.Now().Unix() + 60,
+		ExpiresAt: time.Now().Unix() + ExpiresSecond,
 		Subject:   userID,
 		Issuer:    "server",
 	}
