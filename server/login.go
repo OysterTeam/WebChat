@@ -143,7 +143,6 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				pwdCorrect, info = s.db.VerifyPwdByUserID(sinIn.UserIDInt, sinIn.PwdRaw)
 				userIDInt = sinIn.UserIDInt
 			} else {
-				log.Println(sinIn.Email)
 				pwdCorrect, info, userIDInt = s.db.VerifyPwdByEmail(sinIn.Email, sinIn.PwdRaw)
 			}
 			if !pwdCorrect { // 密码不正确

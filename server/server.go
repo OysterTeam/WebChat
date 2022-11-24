@@ -8,15 +8,15 @@ import (
 )
 
 type ChatServer struct {
-	db                *SqlDataBase  // 登录数据库
+	db                *SqlDataBase  // 用户数据库
 	addr              *string       // 端口
 	RWTimeout         time.Duration // 读写超时
 	msgMux            *MsgMux       // 消息路由
 	signIn            chan int      // 上线通道
 	signOut           chan int      // 下线通道
-	onlineUserNum     int           //在线用户数量
-	userTokenSyncMap  sync.Map
-	userClientSyncMap sync.Map
+	onlineUserNum     int           // 在线用户数量
+	userTokenSyncMap  sync.Map      // UserID-token 对应表
+	userClientSyncMap sync.Map      // UserID-client 对应表
 }
 
 func NewChatServer(addr *string) *ChatServer {

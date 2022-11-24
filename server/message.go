@@ -1,7 +1,5 @@
 package server
 
-import "log"
-
 const (
 	// 登录阶段 1000-1999
 	loginCode     = 1000 // 登录阶段
@@ -44,7 +42,7 @@ func (s *MsgMux) Serve() {
 	for {
 		select {
 		case msg := <-s.msgQueue:
-			log.Println("MsgMux接收到消息", msg, string(msg.MsgContent))
+			//log.Println("MsgMux接收到消息", msg, string(msg.MsgContent))
 			s.SendMsg(msg)
 		}
 	}

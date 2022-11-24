@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -99,7 +98,7 @@ func (c *Client) readPump() {
 		c.msgMux.msgQueue <- &msg
 		_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 		//_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("服务器接收到数据："), message...))
-		_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("receiveMsgId:"), []byte(strconv.Itoa(msg.MsgId))...))
+		//_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("receiveMsgId:"), []byte(strconv.Itoa(msg.MsgId))...))
 	}
 }
 
@@ -117,7 +116,7 @@ func (c *Client) writePump() {
 				return
 			}
 		case msg, ok := <-c.msgChan:
-			fmt.Println("处理client msg chan")
+			//log.Println("处理client msg chan")
 			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok { // 服务器关闭channel
 				err = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
