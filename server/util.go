@@ -11,9 +11,10 @@ import (
 
 type HttpResponseJson struct {
 	HttpResponseCode int         `json:"http_response_code,omitempty"`
-	HttpResponseMsg  string      `json:"http_response_msg,omitempty"`
-	HttpResponseData interface{} `json:"http_response_data,omitempty"`
-	WSToken          string      `json:"ws_token,omitempty"`
+	BoolStatus       bool        `json:"bool_status"`
+	ResponseMsg      string      `json:"response_msg,omitempty"`
+	ResponseData     interface{} `json:"response_data,omitempty"`
+	//WSToken          string      `json:"ws_token,omitempty"`
 }
 
 func IntToBytes(n int) []byte {

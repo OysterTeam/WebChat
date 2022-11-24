@@ -20,18 +20,6 @@ const (
 	videoChatCode = 2102 // 视频电话消息
 )
 
-/*
-举例
-{
-    "send_id":1,
-    "msg_code":2001,
-    "msg_from":30000001,
-    "msg_to":30000002,
-    "msg_to_group":false,
-    "msg_content":"hello"
-}
-*/
-
 type Msg struct {
 	MsgId      int    `json:"msg_id"`
 	MsgCode    int    `json:"msg_code"`

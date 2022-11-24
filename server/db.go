@@ -58,36 +58,36 @@ func (s *SqlDataBase) GetUserIDByEmail(email *string) int {
 	return UserID
 }
 
-func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) error {
+func (s *SqlDataBase) CreateUser(nickName, email, pwd *string, gender int) (int, error) {
 	UserID := s.GetUserIDByEmail(email)
 	if UserID != 0 {
-		return errors.New("email已注册")
+		return 0, errors.New("email已注册")
 	}
 	s.createUserMutex.Lock()
 	query := "INSERT INTO `User`(U_Nickname, U_Gender,U_Email) VALUES(?,?,?)"
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	res, err := stmt.Exec(*nickName, gender, *email)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	userID, err := res.LastInsertId()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	s.createUserMutex.Unlock()
 	query = "INSERT INTO `UserPwd`(U_ID, U_Pwd) VALUES(?, ?)"
 	stmt, err = s.db.Prepare(query)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	_, err = stmt.Exec(userID, *pwd)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return int(userID), nil
 }
 
 func (s *SqlDataBase) VerifyPwdByUserID(UserID int, pwdA *string) (bool, string) {

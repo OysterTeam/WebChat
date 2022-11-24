@@ -39,7 +39,8 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		hr = HttpResponseJson{
 			HttpResponseCode: http.StatusOK,
-			HttpResponseMsg:  "请使用POST方法",
+			BoolStatus:       false,
+			ResponseMsg:      "请使用POST方法",
 		}
 	} else {
 		body, err := io.ReadAll(r.Body)
@@ -51,28 +52,29 @@ func serveSignUp(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
-				HttpResponseMsg:  "错误: json错误无法解析",
-				HttpResponseData: false,
+				BoolStatus:       false,
+				ResponseMsg:      "错误: json错误无法解析",
 			}
 
 		} else if err = sinUp.checkSignUpField(); err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
-				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
-				HttpResponseData: false,
+				BoolStatus:       false,
+				ResponseMsg:      "错误: " + fmt.Sprint(err),
 			}
-		} else if err = s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.PwdRaw, sinUp.genderInt); err != nil {
+		} else if uid, err := s.db.CreateUser(sinUp.NickName, sinUp.Email, sinUp.PwdRaw, sinUp.genderInt); err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
-				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
-				HttpResponseData: false,
+				BoolStatus:       false,
+				ResponseMsg:      "错误: " + fmt.Sprint(err),
 			}
 		} else {
 			w.WriteHeader(http.StatusCreated)
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusCreated,
-				HttpResponseMsg:  "成功: 已创建用户",
-				HttpResponseData: true,
+				BoolStatus:       true,
+				ResponseMsg:      "成功: 已创建用户，UserID请见ResponseData字段。",
+				ResponseData:     uid,
 			}
 		}
 		hrj, _ := json.Marshal(hr)
@@ -110,8 +112,8 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		hr = HttpResponseJson{
 			HttpResponseCode: http.StatusOK,
-			HttpResponseMsg:  "请使用POST方法",
-			HttpResponseData: false,
+			BoolStatus:       false,
+			ResponseMsg:      "请使用POST方法",
 		}
 	} else {
 		body, err := io.ReadAll(r.Body)
@@ -123,15 +125,15 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
-				HttpResponseMsg:  "错误: json错误无法解析",
-				HttpResponseData: false,
+				BoolStatus:       false,
+				ResponseMsg:      "错误: json错误无法解析",
 			}
 
 		} else if err = sinIn.checkSignInField(); err != nil {
 			hr = HttpResponseJson{
 				HttpResponseCode: http.StatusBadRequest,
-				HttpResponseMsg:  "错误: " + fmt.Sprint(err),
-				HttpResponseData: false,
+				BoolStatus:       false,
+				ResponseMsg:      "错误: " + fmt.Sprint(err),
 			}
 		} else { // json校验通过，校验密码
 			var pwdCorrect bool
@@ -148,8 +150,8 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				hr = HttpResponseJson{
 					HttpResponseCode: http.StatusOK,
-					HttpResponseMsg:  "密码匹配状态:" + info,
-					HttpResponseData: pwdCorrect,
+					BoolStatus:       pwdCorrect,
+					ResponseMsg:      "密码匹配状态:" + info,
 				}
 			} else { // 密码正确，判断是否已有登录
 				_, ok := s.userClientSyncMap.Load(userIDInt)
@@ -157,17 +159,17 @@ func serveSignIn(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusCreated)
 					hr = HttpResponseJson{
 						HttpResponseCode: http.StatusOK,
-						HttpResponseMsg:  "密码匹配，但已有连接。",
-						HttpResponseData: false,
+						BoolStatus:       false,
+						ResponseMsg:      "密码匹配，但已有连接。",
 					}
 				} else { // 可以连接，发送token
 					tokenStr := GetTokenStr(strconv.Itoa(userIDInt))
 					w.WriteHeader(http.StatusCreated)
 					hr = HttpResponseJson{
 						HttpResponseCode: http.StatusCreated,
-						HttpResponseMsg:  "密码匹配状态:" + info,
-						HttpResponseData: pwdCorrect,
-						WSToken:          *tokenStr,
+						ResponseMsg:      "密码匹配状态:" + info + "。若匹配，ResponseData字段为token。",
+						BoolStatus:       pwdCorrect,
+						ResponseData:     *tokenStr,
 					}
 					s.userTokenSyncMap.Store(userIDInt, *tokenStr)
 				}
