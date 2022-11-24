@@ -144,9 +144,13 @@ var ExpiresSecond int64 = 60
 ```
 
 `msg_id`代表消息id，具体使用暂未设计。
+
 `msg_code`代表消息类型，具体设计见`message.go`的`const`
+
 `msg_to`代表消息发送给哪个用户，此处只能填写`user_id`
+
 `msg_to_group`代表是否是群组消息。群组功能暂未设计。
+
 `msg_content`代表消息内容，采用`base64`编码。
 
 现在发送消息还没有落库，所以如果对方不在线，会发送失败。
