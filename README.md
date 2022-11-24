@@ -16,6 +16,8 @@ github.com/dgrijalva/jwt-go
 ### 建表
 这里采用`sqlite`，文件放在`db`文件夹下，如需更改请跳转到`server.go`的`NewSqliteDB("db/my.db")`语句。
 
+若希望自己建表，可以参照以下语句，否则不需要执行，可以跳到下一步。
+
 ```sql
 CREATE TABLE `User`
 (
