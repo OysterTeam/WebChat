@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -34,14 +35,11 @@ type Client struct {
 	conn       *websocket.Conn
 	msgMux     *MsgMux
 	userId     int
+	msgChan    chan *Msg
 }
 
 func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 	tokenStr := r.Header.Get("Authorization") //Bearer
-	//if tokenStr == "" {                       //未传token
-	//	return
-	//}
-	//userID, ok := s.tokenUserMap[tokenStr]
 	userIDStr, err := ParseTokenStr(&tokenStr)
 	if err != nil {
 		return
@@ -64,6 +62,7 @@ func serveWs(s *ChatServer, w http.ResponseWriter, r *http.Request) {
 		conn:       conn,
 		msgMux:     s.msgMux,
 		userId:     userID,
+		msgChan:    make(chan *Msg, 8),
 	}
 	s.userClientSyncMap.Store(userID, client)
 	client.chatServer.signIn <- userID
@@ -95,10 +94,12 @@ func (c *Client) readPump() {
 			continue
 		}
 
+		msg.MsgFrom = c.userId
+
 		c.msgMux.msgQueue <- &msg
 		_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 		//_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("服务器接收到数据："), message...))
-		_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("receiveMsgId:"), []byte(strconv.Itoa(msg.SendId))...))
+		_ = c.conn.WriteMessage(websocket.TextMessage, append([]byte("receiveMsgId:"), []byte(strconv.Itoa(msg.MsgId))...))
 	}
 }
 
@@ -113,6 +114,19 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		case msg, ok := <-c.msgChan:
+			fmt.Println("处理client msg chan")
+			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok { // 服务器关闭channel
+				err = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+			msgJson, _ := json.Marshal(msg)
+			err = c.conn.WriteMessage(websocket.TextMessage, msgJson)
+			if err != nil {
+				log.Println(err)
 				return
 			}
 		}

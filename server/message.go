@@ -1,8 +1,6 @@
 package server
 
-import (
-	"log"
-)
+import "log"
 
 const (
 	// 登录阶段 1000-1999
@@ -35,7 +33,7 @@ const (
 */
 
 type Msg struct {
-	SendId     int    `json:"send_id"`
+	MsgId      int    `json:"msg_id"`
 	MsgCode    int    `json:"msg_code"`
 	MsgFrom    int    `json:"msg_from"`
 	MsgTo      int    `json:"msg_to"`
@@ -44,11 +42,14 @@ type Msg struct {
 }
 
 type MsgMux struct {
+	server   *ChatServer
 	msgQueue chan *Msg
 }
 
-func NewMsgMux() *MsgMux {
-	return &MsgMux{msgQueue: make(chan *Msg, 64)}
+func NewMsgMux(server *ChatServer) *MsgMux {
+	return &MsgMux{
+		server:   server,
+		msgQueue: make(chan *Msg, 64)}
 }
 
 func (s *MsgMux) Serve() {
@@ -56,6 +57,27 @@ func (s *MsgMux) Serve() {
 		select {
 		case msg := <-s.msgQueue:
 			log.Println("MsgMux接收到消息", msg, string(msg.MsgContent))
+			s.SendMsg(msg)
 		}
 	}
+}
+
+func (s *MsgMux) SendMsg(msg *Msg) {
+	toClient, okTo := s.server.userClientSyncMap.Load(msg.MsgTo)
+	if !okTo { //用户不在线，当前不落库，仅通知发送方
+		fromClient, okFrom := s.server.userClientSyncMap.Load(msg.MsgFrom)
+		if !okFrom { //发送方也不在线了，当前不落库，丢弃消息
+			return
+		}
+		fromClient.(*Client).msgChan <- &Msg{
+			MsgId:      msg.MsgId,
+			MsgCode:    2001,
+			MsgFrom:    1000,
+			MsgTo:      fromClient.(*Client).userId,
+			MsgContent: []byte("未送达，对方不在线"),
+		}
+		return
+	}
+	toClient.(*Client).msgChan <- msg
+	return
 }

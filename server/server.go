@@ -20,14 +20,15 @@ type ChatServer struct {
 }
 
 func NewChatServer(addr *string) *ChatServer {
-	return &ChatServer{
+	server := ChatServer{
 		db:        NewSqliteDB("db/my.db"),
 		addr:      addr,
 		RWTimeout: 10 * time.Second,
-		msgMux:    NewMsgMux(),
 		signIn:    make(chan int),
 		signOut:   make(chan int),
 	}
+	server.msgMux = NewMsgMux(&server)
+	return &server
 }
 
 func (s *ChatServer) Run() {
