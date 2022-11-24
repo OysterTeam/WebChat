@@ -1,6 +1,14 @@
 # WebChat
 
-基于Golang的聊天后端服务器。
+基于Golang和Vue的在线聊天系统。
+
+前端作者：[@Wendel-Huang](https://github.com/Wendel-Huang)，后端作者[@BacklitCat](https://github.com/BacklitCat)
+
+目前已支持的功能：注册、登录、点对点聊天。
+## 前端文档
+待写
+
+## 后端文档
 
 使用到的第三方库：
 ```
@@ -8,11 +16,6 @@ github.com/gorilla/websocket
 github.com/mattn/go-sqlite3
 github.com/dgrijalva/jwt-go
 ```
-
-目前已支持的功能：注册、登录、点对点聊天。
-
-## 文档
-
 ### 建表
 这里采用`sqlite`，文件放在`db`文件夹下，如需更改请跳转到`server.go`的`NewSqliteDB("db/my.db")`语句。
 
